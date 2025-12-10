@@ -1,0 +1,178 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlserver"
+  url      = env("DATABASE_URL")
+}
+
+// =======================
+// Users
+// =======================
+model users {
+  id                 Int                  @id @default(autoincrement())
+  agent_code         String               @unique @db.VarChar(20)
+  name               String               @db.VarChar(100)
+  email              String               @db.VarChar(100)
+  password_hash      String               @db.VarChar(255)
+  phone_number       String?              @db.VarChar(20)
+  created_at         DateTime             @default(dbgenerated("GETDATE()"))
+  updated_at         DateTime             @default(dbgenerated("GETDATE()"))
+
+  pickup_points      pickup_points[]
+  shipments          shipments[]
+  shipment_addresses shipment_addresses[]
+}
+
+// =======================
+// Pickup Points
+// =======================
+model pickup_points {
+  id           Int        @id @default(autoincrement())
+  user_id      Int
+  pickup_point_code    String?   @db.VarChar(50)
+  email        String?   @db.VarChar(100)
+  name         String     @db.VarChar(100)
+  phone_number String     @db.VarChar(20)
+  address      String     @db.Text
+  city         String     @db.VarChar(100)
+  postal_code  String?    @db.VarChar(10)
+  district_id String?   @db.VarChar(50)
+  latitude     Decimal?   @db.Decimal(10, 7)
+  longitude    Decimal?   @db.Decimal(10, 7)
+  is_default   Int @db.TinyInt   @default(0)
+  is_deleted   Int  @db.TinyInt  @default(0)
+  created_at DateTime @default(dbgenerated("GETDATE()"))
+  updated_at DateTime @default(dbgenerated("GETDATE()"))
+  
+  user         users      @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  shipments    shipments[]
+}
+
+// =======================
+// Shipments
+// =======================
+model shipments {
+  id                   Int       @id @default(autoincrement())
+  user_id              Int
+  pickup_point_code    String   @db.VarChar(50)
+  pickup_point_id     Int
+  shipment_address_id  Int
+  service_code         String    @db.VarChar(50)
+  awb                  String?   @db.VarChar(50)
+  reff_client_id       String    @unique @db.VarChar(100)
+  reff_autokirim_id    String?   @db.VarChar(100)
+  reff_courier_id      String?   @db.VarChar(100)
+  origin_id            Int?
+  destination_id       Int?
+  weight               Decimal?  @db.Decimal(10, 2)
+  qty                  Int       @default(1)
+  length               Decimal?  @db.Decimal(10, 2)
+  width                Decimal?  @db.Decimal(10, 2)
+  height               Decimal?  @db.Decimal(10, 2)
+  description          String?   @db.VarChar(255)
+  remarks              String?   @db.VarChar(255)
+  is_cod               Int @db.TinyInt   @default(0)
+  fee_cod              Int @default (0)
+  item_price           Int @default (0)
+  is_sender_pp         Int @db.TinyInt  @default(0)
+  is_insurance         Int @db.TinyInt  @default(0)
+  fee_insurance        Int @default (0)
+  fee_total            Int @default (0)
+  fee_courier          Int @default (0)
+
+  pickup_name          String    @db.VarChar(100)
+  pickup_phone         String?   @db.VarChar(20)
+  pickup_address       String    @db.Text
+  pickup_city          String?   @db.VarChar(100)
+  pickup_postal_code   String?   @db.VarChar(10)
+
+  destination_name         String  @db.VarChar(100)
+  destination_phone        String? @db.VarChar(20)
+  destination_address      String  @db.Text
+  destination_city         String? @db.VarChar(100)
+  destination_postal_code  String? @db.VarChar(10)
+
+  status               Int    @db.TinyInt  @default(0)
+  created_at_utc       DateTime @default(now())
+  updated_at_utc       DateTime @default(now())
+  created_at           DateTime @default(dbgenerated("GETDATE()"))
+  updated_at           DateTime @default(dbgenerated("GETDATE()"))
+
+  user                 users                @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  pickup_points        pickup_points        @relation(fields: [pickup_point_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  shipment_addresses   shipment_addresses   @relation(fields: [shipment_address_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  shipment_logs        shipment_logs[]
+
+}
+
+// =======================
+// Shipment Address
+// =======================
+model shipment_addresses {
+  id          Int        @id @default(autoincrement())
+  user_id     Int
+  name        String     @db.VarChar(100)
+  phone_number       String?    @db.VarChar(20)
+  address     String     @db.Text
+  city        String?    @db.VarChar(100)
+  postal_code String?    @db.VarChar(10)
+  latitude     Decimal?   @db.Decimal(10, 7)
+  longitude    Decimal?   @db.Decimal(10, 7)
+  is_deleted  Int   @db.TinyInt   @default(0)
+  created_at  DateTime @default(dbgenerated("GETDATE()"))
+  updated_at  DateTime @default(dbgenerated("GETDATE()"))
+  district_id String?   @db.VarChar(50)
+  user        users       @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  shipments   shipments[]
+}
+
+// =======================
+// Shipment Logs
+// =======================
+model shipment_logs {
+  id             Int       @id @default(autoincrement())
+  shipment_id    Int
+  awb_number     String?   @unique @db.VarChar(50)
+  transaction_id Int
+  reff_id        Int
+  status         String    @db.VarChar(50)
+  location       String?   @db.VarChar(100)
+  remarks        String?   @db.VarChar(255)
+  image          String?   @db.Text
+  created_at     DateTime  @default(now())
+
+  shipment       shipments @relation(fields: [shipment_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+// =======================
+// District
+// =======================
+model district {
+  id             Int     @id @default(autoincrement())
+  postal_code    String  @db.VarChar(10)
+  district_id    String  @db.VarChar(20)
+  district_name  String  @db.VarChar(100)
+  regency_name   String  @db.VarChar(100)
+  province_name  String  @db.VarChar(100)
+}
+
+
+model idempotency_keys {
+  id         Int      @id @default(autoincrement())
+  key        String   @unique @db.VarChar(255)
+  response   String?  @db.NVarChar(max)    // JSON disimpan sebagai string
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model special_expedition {
+  id         Int      @id @default(autoincrement())
+  courier_code String   @unique @db.VarChar(20)
+  name        String   @db.VarChar(100)
+  minimal_fee Int      @default(0)
+  description String?   @db.VarChar(255)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}

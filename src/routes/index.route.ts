@@ -1,0 +1,15 @@
+import { Hono } from "hono";
+import districtRoutes from "./district.route";
+import pickupPointRoutes from "./pickup-point.route";
+import shipmentAddressRoutes from "./shipment-address.route";
+import shipmentRoutes from "./shipment.route";
+import priceRoutes from "./price.route";
+import auth from "./auth.route";
+const routes = new Hono();
+routes.route("/districts", districtRoutes);
+routes.route("/pickup-points", pickupPointRoutes);
+routes.route("/shipment-addresses", shipmentAddressRoutes);
+routes.route("/shipments", shipmentRoutes);
+routes.route("/price", priceRoutes);
+routes.route("/auth", auth);
+export default routes;
