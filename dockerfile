@@ -30,7 +30,6 @@ RUN apk add --no-cache \
 COPY --from=builder /app/app ./app
 
 COPY prisma ./prisma
-COPY .env .env
 
 EXPOSE 3000
 CMD ["./app"]
