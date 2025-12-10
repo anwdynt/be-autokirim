@@ -1,53 +1,36 @@
-# ===============================
-# 1. BASE IMAGE
-# ===============================
-FROM oven/bun:1.1.20-alpine AS base
+# ===========================
+# 1. Build Executable Binary
+# ===========================
+FROM oven/bun:1 AS builder
 
 WORKDIR /app
 
-# ===============================
-# 2. INSTALL DEPENDENCIES
-# ===============================
-FROM base AS deps
-
-COPY bun.lockb package.json tsconfig.json ./
-
-# Install all deps including ts-node
-RUN bun install --frozen-lockfile
-
-# ===============================
-# 3. PRISMA BUILD
-# ===============================
-FROM deps AS prisma
-
-COPY prisma ./prisma
-RUN bunx prisma generate
-
-# ===============================
-# 4. BUILD APP
-# ===============================
-FROM base AS build
-
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=prisma /app/prisma ./prisma
+COPY package.json bun.lockb ./
+RUN bun install
 
 COPY . .
 
-# ===============================
-# 5. RUNTIME STAGE
-# ===============================
-FROM base AS runner
+RUN bunx prisma generate
+
+# Build single binary
+RUN bun build src/index.ts --compile --outfile app
+
+# ===========================
+# 2. Final Image for Coolify
+# ===========================
+FROM alpine:3.19 AS final
+
 WORKDIR /app
 
-ENV NODE_ENV=production
-ENV PORT=3000
+RUN apk add --no-cache \
+    libstdc++ \
+    ca-certificates
 
-# Copy app sources & node_modules
-COPY --from=build /app . 
+# Copy binary
+COPY --from=builder /app/app ./app
 
-# =========================================
-# Run migrations + seed on container start
-# =========================================
-CMD bunx prisma migrate deploy && \
-    bun run seed && \
-    bun run src/index.ts
+COPY prisma ./prisma
+COPY .env .env
+
+EXPOSE 3000
+CMD ["./app"]
