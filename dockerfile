@@ -1,36 +1,45 @@
 # ===========================
-# 1. Build Executable Binary
+# 1. Base Image
 # ===========================
-FROM oven/bun:1 AS builder
-
+FROM oven/bun:1.1.20-alpine AS base
 WORKDIR /app
 
-COPY package.json bun.lock* ./
-
+# ===========================
+# 2. Install Dependencies
+# ===========================
+FROM base AS deps
+COPY package.json bun.lock ./
 RUN bun install
 
+# ===========================
+# 3. Build Stage
+# ===========================
+FROM deps AS build
 COPY . .
-
 RUN bunx prisma generate
-
-# Build single binary
-RUN bun build src/index.ts --compile --outfile app
+RUN bun build src/index.ts --target=bun --outdir dist --no-bundle
 
 # ===========================
-# 2. Final Image for Coolify
+# 4. Production Dependencies
 # ===========================
-FROM alpine:3.19 AS final
-
-WORKDIR /app
-
-RUN apk add --no-cache \
-    libstdc++ \
-    ca-certificates
-
-# Copy binary
-COPY --from=builder /app/app ./app
+FROM base AS prod-deps
+COPY package.json bun.lock ./
+RUN bun install --production
 
 COPY prisma ./prisma
+RUN bunx prisma generate
+
+# ===========================
+# 5. Final Image
+# ===========================
+FROM base AS final
+WORKDIR /app
+
+COPY --from=prod-deps /app/node_modules ./node_modules
+COPY --from=build /app/dist ./dist
+COPY prisma ./prisma
+COPY .env .env
 
 EXPOSE 3000
-CMD ["./app"]
+
+CMD ["bun", "run", "dist/index.js"]
