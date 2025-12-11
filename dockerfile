@@ -1,9 +1,8 @@
 # =========================
-# Stage 1: Install ODBC driver (Ubuntu)
+# Stage 1: Install ODBC driver (Ubuntu 22.04)
 # =========================
 FROM ubuntu:22.04 AS odbc-stage
 
-# Install dependencies dasar + ODBC
 RUN apt-get update && apt-get install -y \
     curl \
     gnupg \
@@ -25,16 +24,17 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Pastikan library ODBC tersedia
 RUN ldconfig
+
 
 # =========================
 # Stage 2: Dependencies Bun
 # =========================
 FROM oven/bun:1 AS deps
 WORKDIR /app
-COPY package.json bun.lock ./
+COPY bun.lock package.json ./
 RUN bun install --frozen-lockfile
+
 
 # =========================
 # Stage 3: Build project
@@ -45,16 +45,34 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN bun run build
 
+
 # =========================
-# Stage 4: Production image
+# Stage 4: Final Production Image (Debian 13 + ODBC)
 # =========================
 FROM oven/bun:1 AS prod
 WORKDIR /app
 
-# Copy ODBC driver dan library dari stage sebelumnya
+# Copy only *required* ODBC libs (NO GLIBC)
 COPY --from=odbc-stage /opt/microsoft/msodbcsql18 /opt/microsoft/msodbcsql18
-COPY --from=odbc-stage /usr/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu
-COPY --from=odbc-stage /lib/x86_64-linux-gnu /lib/x86_64-linux-gnu
+
+# unixODBC core
+COPY --from=odbc-stage /usr/lib/x86_64-linux-gnu/libodbc.so.2 /usr/lib/x86_64-linux-gnu/
+COPY --from=odbc-stage /usr/lib/x86_64-linux-gnu/libodbcinst.so.2 /usr/lib/x86_64-linux-gnu/
+
+# Microsoft ODBC Driver for SQL Server
+COPY --from=odbc-stage /usr/lib/x86_64-linux-gnu/libmsodbcsql-18.* /usr/lib/x86_64-linux-gnu/
+
+# Kerberos / GSSAPI dependencies
+COPY --from=odbc-stage /usr/lib/x86_64-linux-gnu/libgssapi_krb5.so.* /usr/lib/x86_64-linux-gnu/
+COPY --from=odbc-stage /usr/lib/x86_64-linux-gnu/libkrb5.so.* /usr/lib/x86_64-linux-gnu/
+COPY --from=odbc-stage /usr/lib/x86_64-linux-gnu/libk5crypto.so.* /usr/lib/x86_64-linux-gnu/
+COPY --from=odbc-stage /usr/lib/x86_64-linux-gnu/libcom_err.so.* /usr/lib/x86_64-linux-gnu/
+
+# ODBC config
+COPY --from=odbc-stage /etc/odbcinst.ini /etc/odbcinst.ini
+COPY --from=odbc-stage /etc/odbc.ini /etc/odbc.ini
+
+# App files
 COPY --from=build /app/dist ./dist
 COPY --from=deps /app/node_modules ./node_modules
 COPY prisma ./prisma
@@ -62,7 +80,7 @@ COPY package.json ./
 
 ENV NODE_ENV=production
 ENV PORT=3000
+
 EXPOSE 3000
 
-# Prisma generate + run server
 CMD ["sh", "-c", "bunx prisma generate && bun dist/index.js"]
