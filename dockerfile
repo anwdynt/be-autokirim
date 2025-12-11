@@ -6,7 +6,7 @@ WORKDIR /usr/src/app
 # Alpine images require specific package management
 RUN apk add --no-cache nodejs npm openssl
 
-COPY package.json bun.lockb ./
+COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile
 
 # Copy source code to the install stage
