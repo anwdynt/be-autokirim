@@ -1,5 +1,5 @@
 # Base image menggunakan Debian 12 (bookworm)
-FROM oven/bun:1-bookworm AS base
+FROM oven/bun:1 AS base
 WORKDIR /app
 
 # Install SQL Server ODBC driver (msodbcsql18) – fully supported by Debian 12
