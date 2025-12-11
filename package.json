@@ -3,7 +3,7 @@
   "scripts": {
     "dev": "bun run --hot src/index.ts",
     "start" : "bun run src/index.ts",
-    "build": "bun build src/index.ts --outdir dist --target=bun --format=esm --entry-naming=\"[name].js\"",
+    "build": "bun build src/index.ts --outdir dist --minify --sourcemap --target=bun --format=esm --entry-naming=\"[name].js\"",
     "migrate:init": "bunx prisma migrate dev --name init && bunx prisma generate",
     "migrate:add": "bunx prisma migrate dev --name modified && bunx prisma generate",
     "migrate:reset": "bunx prisma migrate reset && bunx prisma generate",

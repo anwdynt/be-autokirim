@@ -1,34 +1,29 @@
-# ===========================
-# 1. Base image
-# ===========================
-FROM node:20-alpine AS base
+# =========================
+# 1. Builder phase
+# =========================
+FROM node:20-slim as builder
 WORKDIR /app
 
-# ===========================
-# 2. Install dependencies
-# ===========================
-COPY package.json package-lock.json ./
+COPY package*.json ./
 RUN npm install
 
-# ===========================
-# 3. Build TypeScript
-# ===========================
-FROM base AS build
-WORKDIR /app
 COPY . .
-RUN npx tsc
 
-# ===========================
-# 4. Final Production Image
-# ===========================
-FROM node:20-alpine AS final
+# Hanya build TS → JANGAN prisma generate di sini
+RUN npm run build
+
+# =========================
+# 2. Final production
+# =========================
+FROM node:20-slim
 WORKDIR /app
 
-COPY --from=base /app/node_modules ./node_modules
-COPY --from=build /app/dist ./dist
-COPY prisma ./prisma
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/prisma ./prisma
 
 EXPOSE 3000
 
-# Prisma → Seed → Start
+# Prisma generate dilakukan saat container START (ENV sudah ada)
 CMD ["sh", "-c", "npx prisma generate && node dist/index.js"]
