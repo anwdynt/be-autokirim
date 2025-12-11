@@ -14,7 +14,7 @@ COPY . .
 
 # Generate Prisma client
 # This step works because Node.js is installed in this stage
-RUN bunx prisma generate
+#RUN bunx prisma generate
 
 # Final production stage
 FROM oven/bun:1-alpine AS release
@@ -31,4 +31,4 @@ COPY --from=install /usr/src/app/. .
 EXPOSE 3000
 
 # Command to run the application
-CMD [ "bun", "run", "index.ts" ]
+CMD [ "bun", "run", "bunx prisma generate && bun dist/index.js" ]
