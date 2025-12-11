@@ -17,7 +17,7 @@ RUN bun install
 FROM deps AS build
 COPY . .
 RUN bunx prisma generate
-RUN bun build src/index.ts --target=bun --outdir dist --no-bundle
+RUN bun build src/index.ts --target=bun --outdir --minify --sourcemap
 
 # ===========================
 # 4. Production Dependencies
