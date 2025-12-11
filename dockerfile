@@ -2,7 +2,7 @@ FROM oven/bun:latest AS base
 WORKDIR /app
 
 # Copy package.json & prisma schema
-COPY package.json bun.lockb prisma ./ 
+COPY package.json prisma ./ 
 
 # Install dependencies
 RUN bun install
