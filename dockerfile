@@ -1,34 +1,42 @@
-# Use the official Bun image as the base for installation
-FROM oven/bun:1-alpine AS install
-WORKDIR /usr/src/app
+FROM oven/bun:1-debian AS base
+WORKDIR /app
 
-# Install Node.js and npm (required for Prisma generate command workaround)
-# Alpine images require specific package management
-RUN apk add --no-cache nodejs npm openssl
+# Install SQL Server ODBC driver
+# Necessary for mssql connectivity issues on some linux environments
+RUN apt-get update \
+    && apt-get install -y curl gnupg apt-transport-https ca-certificates \
+    && curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
+    && curl https://packages.microsoft.com/config/debian/12/prod.list \
+    > /etc/apt/sources.list.d/mssql-release.list \
+    && apt-get update \
+    && ACCEPT_EULA=Y apt-get install -y msodbcsql18 unixodbc unixodbc-dev
 
+# Dependencies
+FROM base AS deps
 COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile
 
-# Copy source code to the install stage
+# Build
+FROM base AS build
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+# Use the build script from package.json which correctly points to src/index.ts
+RUN bun run build
 
-# Generate Prisma client
-# This step works because Node.js is installed in this stage
-#RUN bunx prisma generate
+# Production
+FROM base AS prod
+WORKDIR /app
 
-# Final production stage
-FROM oven/bun:1-alpine AS release
-WORKDIR /usr/src/app
+COPY --from=build /app/dist ./dist
+COPY --from=deps /app/node_modules ./node_modules
+COPY prisma ./prisma
+COPY package.json ./
 
-# Install Node.js and npm in the final stage too
-RUN apk add --no-cache nodejs npm openssl
+ENV NODE_ENV=production
+ENV PORT=3000
 
-# Copy production dependencies and generated Prisma client from the install stage
-COPY --from=install /usr/src/app/node_modules node_modules
-COPY --from=install /usr/src/app/. .
-
-# Expose the port your Hono app runs on (default is 3000)
 EXPOSE 3000
 
-# Command to run the application
-CMD [ "bun", "run", "bunx prisma generate && bun dist/index.js" ]
+# run prisma generate to ensure the client matches the environment/architecture
+# then start the application
+CMD ["sh", "-c", "bunx prisma generate && bun dist/index.js"]
