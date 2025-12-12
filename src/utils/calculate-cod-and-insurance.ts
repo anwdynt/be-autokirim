@@ -1,7 +1,7 @@
 // ========================================================
 //  Helper COD + Insurance
 // ========================================================
-import { Decimal } from "@prisma/client/runtime/library.js";
+import { Prisma } from "@prisma/client";
 export const calculateCodAndInsurance = (
     courierCode: string,
     feeCodRate: number,
@@ -32,9 +32,9 @@ export const calculateCodAndInsurance = (
     }
 
     return {
-        insurance_value: new Decimal(insuranceValue).ceil(),
-        cod_fee_without_insurance: new Decimal(codWithout).ceil(),
-        cod_fee_with_insurance: new Decimal(codWith).ceil()
+        insurance_value: new Prisma.Decimal(insuranceValue).ceil(),
+        cod_fee_without_insurance: new Prisma.Decimal(codWithout).ceil(),
+        cod_fee_with_insurance: new Prisma.Decimal(codWith).ceil()
     }
 };
 
