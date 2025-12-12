@@ -1,21 +1,27 @@
-FROM oven/bun:latest AS base
+FROM oven/bun:latest AS build
 WORKDIR /app
 
-# Copy package.json & prisma schema
-COPY package.json prisma ./ 
+COPY package.json bun.lockb ./
+COPY prisma ./prisma
 
-# Install dependencies
-RUN bun install
-
-# Generate Prisma Client
+RUN bun install --frozen-lockfile
 RUN bunx prisma generate
 
-# Copy source code
 COPY . .
 
-# Build (opsional, jika pakai bun build)
-# RUN bun build src/index.ts --outdir dist
+RUN bun run build:execute
+
+
+FROM oven/bun:latest AS production
+WORKDIR /app
+
+# Copy prisma (schema + client)
+COPY --from=build /app/prisma ./prisma
+
+# Copy dist/app binary
+COPY --from=build /app/dist/app ./app
 
 EXPOSE 3000
 
-CMD sh -c "bunx prisma migrate deploy && bun run src/index.ts"
+# Migrate DB → run binary
+CMD sh -c "bunx prisma migrate deploy && ./app"
