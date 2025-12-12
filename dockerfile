@@ -8,6 +8,7 @@ COPY package.json bun.lock ./
 COPY prisma ./prisma
 
 RUN bun install --frozen-lockfile
+RUN npx prisma generate  
 COPY . .
 
 # Build binary
@@ -29,4 +30,4 @@ COPY --from=build /app/dist/app ./app
 EXPOSE 3000
 
 # ON RUNTIME (env available): generate -> migrate -> run
-CMD sh -c "bunx prisma generate && bunx prisma migrate deploy && ./app"
+CMD sh -c "bunx prisma migrate deploy && ./app"
