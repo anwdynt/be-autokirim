@@ -18,4 +18,4 @@ COPY . .
 
 EXPOSE 3000
 
-CMD ["bun", "run", "src/index.ts"]
+CMD sh -c "bunx prisma migrate deploy && bun run src/index.ts"
