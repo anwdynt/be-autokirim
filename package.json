@@ -2,7 +2,7 @@
   "name": "api-autokirim",
   "scripts": {
     "dev": "bun run --hot src/index.ts",
-    "start" : "bun run src/index.ts",
+    "start": "bun run src/index.ts",
     "build": "bun build src/index.ts --outdir dist --minify --sourcemap --target=bun --format=esm --entry-naming=\"[name].js\"",
     "build:execute": "bun build src/index.ts --compile --minify --sourcemap --outfile dist/app",
     "migrate:init": "bunx prisma migrate dev --name init && bunx prisma generate",
@@ -16,7 +16,7 @@
     "express": "^5.1.0",
     "hono": "^4.10.5",
     "mssql": "^12.1.0",
-    "prisma": "^6.19.0",
+    "prisma": "6.19.0",
     "winston": "^3.18.3",
     "zod": "^4.1.12"
   },
