@@ -1,6 +1,6 @@
 import { CheckPriceResponse } from "../utils/autokirim/price";
 import { calculateCodAndInsurance } from "../utils/calculate-cod-and-insurance";
-import { Decimal } from "@prisma/client/runtime/library.js";
+import { Prisma } from "@prisma/client";
 
 export type CheckPriceDTO = {
     origin_id: number;
@@ -23,9 +23,9 @@ export type ServiceDetailMapped = ServiceDetailBase & {
     courier_code: string;
     minimal_fee_cod: number;
     image : string;
-    insurance_value: Decimal;
-    cod_fee_without_insurance: Decimal;
-    cod_fee_with_insurance: Decimal;
+    insurance_value: Prisma.Decimal;
+    cod_fee_without_insurance: Prisma.Decimal;
+    cod_fee_with_insurance: Prisma.Decimal;
 };
 
 export type CourierPriceMapped = {
