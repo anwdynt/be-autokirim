@@ -1,6 +1,6 @@
 import { CheckPriceResponse } from "../utils/autokirim/price";
 import { calculateCodAndInsurance } from "../utils/calculate-cod-and-insurance";
-import { Decimal } from "@prisma/client/runtime/library";
+import { Decimal } from "@prisma/client/runtime/library.js";
 
 export type CheckPriceDTO = {
     origin_id: number;

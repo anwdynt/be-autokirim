@@ -1,7 +1,7 @@
 // ========================================================
 //  Helper COD + Insurance
 // ========================================================
-import { Decimal } from "@prisma/client/runtime/library";
+import { Decimal } from "@prisma/client/runtime/library.js";
 export const calculateCodAndInsurance = (
     courierCode: string,
     feeCodRate: number,
