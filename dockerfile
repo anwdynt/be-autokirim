@@ -8,7 +8,7 @@ COPY package.json bun.lock ./
 COPY prisma ./prisma
 
 RUN bun install --frozen-lockfile
-RUN npx prisma generate  
+RUN bunx prisma generate  
 COPY . .
 
 # Build binary
