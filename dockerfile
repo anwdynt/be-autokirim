@@ -1,5 +1,5 @@
 ############################################
-# BUILD STAGE (no prisma generate here!)
+# BUILD
 ############################################
 FROM oven/bun:latest AS build
 WORKDIR /app
@@ -7,27 +7,24 @@ WORKDIR /app
 COPY package.json bun.lock ./
 COPY prisma ./prisma
 
-RUN bun install --frozen-lockfile
-RUN bunx prisma generate  
+RUN bun install
+
 COPY . .
 
-# Build binary
 RUN bun run build
 
-
 ############################################
-# PRODUCTION STAGE
+# RUNTIME
 ############################################
-FROM oven/bun:latest AS production
+FROM oven/bun:latest
 WORKDIR /app
 
-# Copy prisma schema
-COPY prisma ./prisma
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/dist ./dist
+COPY --from=build /app/prisma ./prisma
 
-# Copy binary
-COPY --from=build /app/dist/app ./app
+ENV PRISMA_CONFIG_PATH=prisma/prisma.config.ts
 
 EXPOSE 3000
 
-# ON RUNTIME (env available): generate -> migrate -> run
-CMD sh -c "bunx prisma migrate deploy && ./app"
+CMD ["sh", "-c", "bunx prisma generate && bunx prisma migrate deploy && bun run dist/index.js"]
