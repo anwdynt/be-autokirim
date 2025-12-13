@@ -28,9 +28,7 @@ COPY --from=build /app/dist/app ./app
 
 EXPOSE 3000
 
-CMD sh -c "
-    bunx prisma generate &&
-    bunx prisma migrate deploy &&
-    ./app
-"
+CMD ["sh", "-c", "bunx prisma generate && bunx prisma migrate deploy && ./app"]
+
+
 
