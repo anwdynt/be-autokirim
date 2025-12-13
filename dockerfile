@@ -12,7 +12,7 @@ RUN bunx prisma generate
 COPY . .
 
 # Build binary
-RUN bun run build:execute
+RUN bun run build
 
 
 ############################################
