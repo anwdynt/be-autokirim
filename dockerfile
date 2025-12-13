@@ -1,18 +1,17 @@
 ############################################
-# BUILD STAGE (no prisma generate here!)
+# BUILD STAGE
 ############################################
 FROM oven/bun:latest AS build
 WORKDIR /app
 
 COPY package.json bun.lock ./
-COPY prisma ./prisma
-
 RUN bun install --frozen-lockfile
-RUN bunx prisma generate  
+
 COPY . .
 
-# Build binary
+# build binary
 RUN bun run build:execute
+
 
 
 ############################################
@@ -21,13 +20,17 @@ RUN bun run build:execute
 FROM oven/bun:latest AS production
 WORKDIR /app
 
-# Copy prisma schema
-COPY prisma ./prisma
+COPY package.json bun.lock ./
+RUN bun install --production
 
-# Copy binary
+COPY prisma ./prisma
 COPY --from=build /app/dist/app ./app
 
 EXPOSE 3000
 
-# ON RUNTIME (env available): generate -> migrate -> run
-CMD sh -c "bunx prisma migrate deploy && ./app"
+CMD sh -c "
+    bunx prisma generate &&
+    bunx prisma migrate deploy &&
+    ./app
+"
+
