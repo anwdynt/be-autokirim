@@ -22,8 +22,7 @@ WORKDIR /app
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/prisma ./prisma
-
-ENV PRISMA_CONFIG_PATH=prisma/prisma.config.ts
+COPY --from=build /app/prisma.config.ts
 
 EXPOSE 3000
 
