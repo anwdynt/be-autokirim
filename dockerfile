@@ -6,6 +6,7 @@ WORKDIR /app
 
 COPY package.json bun.lock ./
 COPY prisma ./prisma
+COPY prisma.config.ts ./
 
 RUN bun install
 
@@ -22,7 +23,9 @@ WORKDIR /app
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/prisma ./prisma
-COPY --from=build /app/prisma.config.ts
+COPY --from=build /app/prisma.config.ts ./prisma.config.ts
+
+ENV PRISMA_CONFIG_PATH=prisma.config.ts
 
 EXPOSE 3000
 
